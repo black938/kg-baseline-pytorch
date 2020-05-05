@@ -10,7 +10,6 @@ def seq_max_pool(x):
     mask是[None, seq_len, 1]的格式，先除去mask部分，
     然后再做maxpooling。
     """
-    x=[i.cpu() for i in x]
     seq, mask = x
     seq = seq - (1 - mask) * 1e10
     return torch.max(seq, 1).cuda()
@@ -21,7 +20,6 @@ def seq_and_vec(x):
     vec是[None, v_size]的格式，将vec重复seq_len次，拼到seq上，
     得到[None, seq_len, s_size+v_size]的向量。
     """
-    x=[i.cpu() for i in x]
     seq, vec = x
     vec = torch.unsqueeze(vec, 1)
 
@@ -34,12 +32,13 @@ def seq_gather(x):
     idxs是[None, 1]的格式，在seq的第i个序列中选出第idxs[i]个向量，
     最终输出[None, s_size]的向量。
     """
-    x=[i.cpu() for i in x]
     seq, idxs = x
     batch_idxs = torch.arange(0, seq.size(0))
 
     batch_idxs = torch.unsqueeze(batch_idxs, 1)
 
+    print("batch_idxs",batch_idxs.device)
+    print("idxs",idxs.device)
     idxs = torch.cat([batch_idxs, idxs], 1)
 
     res = []
@@ -109,6 +108,8 @@ class s_model(nn.Module):
         # outs torch.Size([21, 126, 128])
         t = outs
         t = self.fc1_dropout(t)
+        print("检查s_model的t&mask***************")
+        print(t.device,mask.device)
         t = t.mul(mask)  # (batch_size,sent_len,char_size)
         # t torch.Size([21, 126, 128])
         # mask torch.Size([21, 126, 1])
