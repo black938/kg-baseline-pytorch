@@ -23,7 +23,7 @@ def seq_and_vec(x):
     seq, vec = x
     vec = torch.unsqueeze(vec, 1)
 
-    vec = torch.zeros_like(seq[:, :, :1]) + vec
+    vec = torch.zeros_like(seq[:, :, :1]).cuda() + vec
     return torch.cat([seq, vec], 2)
 
 
@@ -35,7 +35,7 @@ def seq_gather(x):
     seq, idxs = x
     batch_idxs = torch.arange(0, seq.size(0))
 
-    batch_idxs = torch.unsqueeze(batch_idxs, 1)
+    batch_idxs = torch.unsqueeze(batch_idxs, 1).cuda()
 
     print("batch_idxs",batch_idxs.device)
     print("idxs",idxs.device)
