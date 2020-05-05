@@ -100,12 +100,13 @@ class s_model(nn.Module):
     def forward(self, t):
         mask = torch.gt(torch.unsqueeze(t, 2), 0).type(torch.FloatTensor)  # (batch_size,sent_len,1)
         mask.requires_grad = False
+
         # mask torch.Size([21, 126, 1])
         outs = self.embeds(t)
         # outs torch.Size([21, 126, 128])
         t = outs
         t = self.fc1_dropout(t)
-
+        mask=mask.cuda()
         t = t.mul(mask)  # (batch_size,sent_len,char_size)
         # t torch.Size([21, 126, 128])
         # mask torch.Size([21, 126, 1])
@@ -129,7 +130,7 @@ class s_model(nn.Module):
         k = self.linear_k(h)
         v = self.linear_v(h)
 
-        att = DotAttention(dropout=0.2)
+        att = DotAttention(dropout=0.2).cuda()
         attention_out, attention_weight = att(q, k, v, )
         # ps1 = self.fc_ps1(h)
         # ps2 = self.fc_ps2(h)
