@@ -12,7 +12,7 @@ def seq_max_pool(x):
     """
     seq, mask = x
     seq = seq - (1 - mask) * 1e10
-    return torch.max(seq, 1).cuda()
+    return torch.max(seq, 1)
 
 
 def seq_and_vec(x):
@@ -24,7 +24,7 @@ def seq_and_vec(x):
     vec = torch.unsqueeze(vec, 1)
 
     vec = torch.zeros_like(seq[:, :, :1]) + vec
-    return torch.cat([seq, vec], 2).cuda()
+    return torch.cat([seq, vec], 2)
 
 
 def seq_gather(x):
@@ -47,7 +47,7 @@ def seq_gather(x):
         res.append(torch.unsqueeze(vec, 0))
 
     res = torch.cat(res)
-    return res.cuda()
+    return res
 
 
 from Attention import DotAttention
