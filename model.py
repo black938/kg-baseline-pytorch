@@ -37,8 +37,8 @@ def seq_gather(x):
 
     batch_idxs = torch.unsqueeze(batch_idxs, 1).cuda()
 
-    print("batch_idxs",batch_idxs.device)
-    print("idxs",idxs.device)
+    # print("batch_idxs",batch_idxs.device)
+    # print("idxs",idxs.device)
     idxs = torch.cat([batch_idxs, idxs], 1)
 
     res = []
@@ -108,8 +108,6 @@ class s_model(nn.Module):
         # outs torch.Size([21, 126, 128])
         t = outs
         t = self.fc1_dropout(t)
-        print("检查s_model的t&mask***************")
-        print(t.device,mask.device)
         mask=mask.cuda()
         t = t.mul(mask)  # (batch_size,sent_len,char_size)
         # t torch.Size([21, 126, 128])
@@ -129,7 +127,6 @@ class s_model(nn.Module):
 
         h = h.permute(0, 2, 1)
         '''开始attention过程'''
-        print(h.size())
         q = self.linear_q(h)
         k = self.linear_k(h)
         v = self.linear_v(h)
@@ -196,7 +193,7 @@ class po_model(nn.Module):
 
 
         '''开始attention过程'''
-        print(h.size())
+
         q = self.linear_q(h)
         k = self.linear_k(h)
         v = self.linear_v(h)
