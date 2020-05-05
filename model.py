@@ -110,6 +110,7 @@ class s_model(nn.Module):
         t = self.fc1_dropout(t)
         print("检查s_model的t&mask***************")
         print(t.device,mask.device)
+        mask=mask.cuda()
         t = t.mul(mask)  # (batch_size,sent_len,char_size)
         # t torch.Size([21, 126, 128])
         # mask torch.Size([21, 126, 1])
