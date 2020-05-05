@@ -10,9 +10,10 @@ def seq_max_pool(x):
     mask是[None, seq_len, 1]的格式，先除去mask部分，
     然后再做maxpooling。
     """
+    x=[i.cpu() for i in x]
     seq, mask = x
     seq = seq - (1 - mask) * 1e10
-    return torch.max(seq, 1)
+    return torch.max(seq, 1).cuda()
 
 
 def seq_and_vec(x):
@@ -20,11 +21,12 @@ def seq_and_vec(x):
     vec是[None, v_size]的格式，将vec重复seq_len次，拼到seq上，
     得到[None, seq_len, s_size+v_size]的向量。
     """
+    x=[i.cpu() for i in x]
     seq, vec = x
     vec = torch.unsqueeze(vec, 1)
 
     vec = torch.zeros_like(seq[:, :, :1]) + vec
-    return torch.cat([seq, vec], 2)
+    return torch.cat([seq, vec], 2).cuda()
 
 
 def seq_gather(x):
@@ -32,6 +34,7 @@ def seq_gather(x):
     idxs是[None, 1]的格式，在seq的第i个序列中选出第idxs[i]个向量，
     最终输出[None, s_size]的向量。
     """
+    x=[i.cpu() for i in x]
     seq, idxs = x
     batch_idxs = torch.arange(0, seq.size(0))
 
@@ -45,7 +48,7 @@ def seq_gather(x):
         res.append(torch.unsqueeze(vec, 0))
 
     res = torch.cat(res)
-    return res
+    return res.cuda()
 
 
 from Attention import DotAttention
@@ -106,7 +109,6 @@ class s_model(nn.Module):
         # outs torch.Size([21, 126, 128])
         t = outs
         t = self.fc1_dropout(t)
-        mask=mask.cuda()
         t = t.mul(mask)  # (batch_size,sent_len,char_size)
         # t torch.Size([21, 126, 128])
         # mask torch.Size([21, 126, 1])
