@@ -1,4 +1,3 @@
-import ipdb
 import torch
 from torch import nn
 import numpy as np
@@ -132,7 +131,6 @@ class s_model(nn.Module):
 
         att = DotAttention(dropout=0.2)
         attention_out, attention_weight = att(q, k, v, )
-        # ipdb.set_trace()
         # ps1 = self.fc_ps1(h)
         # ps2 = self.fc_ps2(h)
         ps1 = self.fc_ps1(attention_out)
