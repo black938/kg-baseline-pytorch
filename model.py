@@ -23,7 +23,7 @@ def seq_and_vec(x):
     seq, vec = x
     vec = torch.unsqueeze(vec, 1)
 
-    vec = torch.zeros_like(seq[:, :, :1]) + vec
+    vec = torch.zeros_like(seq[:, :, :1]).cuda() + vec
     return torch.cat([seq, vec], 2)
 
 
@@ -35,7 +35,7 @@ def seq_gather(x):
     seq, idxs = x
     batch_idxs = torch.arange(0, seq.size(0))
 
-    batch_idxs = torch.unsqueeze(batch_idxs, 1)
+    batch_idxs = torch.unsqueeze(batch_idxs, 1).cuda()
 
     idxs = torch.cat([batch_idxs, idxs], 1)
 
@@ -99,7 +99,7 @@ class s_model(nn.Module):
         # outs torch.Size([21, 126, 128])
         t = outs
         t = self.fc1_dropout(t)
-
+        mask = mask.cuda()
         t = t.mul(mask)  # (batch_size,sent_len,char_size)
         # t torch.Size([21, 126, 128])
         # mask torch.Size([21, 126, 1])
