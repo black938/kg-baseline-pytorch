@@ -80,7 +80,17 @@ class s_model(nn.Module):
 
         self.conv1 = nn.Sequential(
             nn.Conv1d(
-                in_channels=word_emb_size * 2,  # 输入的深度
+                in_channels=word_emb_size ,  # 输入的深度
+                out_channels=word_emb_size,  # filter 的个数，输出的高度
+                kernel_size=3,  # filter的长与宽
+                stride=1,  # 每隔多少步跳一下
+                padding=1,  # 周围围上一圈 if stride= 1, pading=(kernel_size-1)/2
+            ),
+            nn.ReLU(),
+        )
+        self.conv2 = nn.Sequential(
+            nn.Conv1d(
+                in_channels=word_emb_size*2,  # 输入的深度
                 out_channels=word_emb_size,  # filter 的个数，输出的高度
                 kernel_size=3,  # filter的长与宽
                 stride=1,  # 每隔多少步跳一下
@@ -113,19 +123,21 @@ class s_model(nn.Module):
         # t torch.Size([21, 126, 128])
         # mask torch.Size([21, 126, 1])
         # mul矩阵对应位置相乘 mm矩阵相乘 此时t中LongTensor=0的补丁embed值被全部mask成0
-        t, (h_n, c_n) = self.lstm1(t, None)
-        t, (h_n, c_n) = self.lstm2(t, None)
-
-        t_max, t_max_index = seq_max_pool([t, mask])
+        # t, (h_n, c_n) = self.lstm1(t, None)
+        # t, (h_n, c_n) = self.lstm2(t, None)
+        t = self.conv1(t.permute(0,2,1))
+        t = t.permute(0,2,1)
+        # torch.Size([21, 126, 128])
+        t_max, t_max_index = seq_max_pool([t, mask.squeeze(-2)])
 
         t_dim = list(t.size())[-1]
         h = seq_and_vec([t, t_max])
+        # torch.Size([21, 126, 256])
+
+        h = self.conv2(h.permute(0,2,1))
 
         h = h.permute(0, 2, 1)
-
-        h = self.conv1(h)
-
-        h = h.permute(0, 2, 1)
+        # torch.Size([21, 126, 128])
         '''开始attention过程'''
         q = self.linear_q(h)
         k = self.linear_k(h)
