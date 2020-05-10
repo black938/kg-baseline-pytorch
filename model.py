@@ -23,7 +23,7 @@ def seq_and_vec(x):
     seq, vec = x
     vec = torch.unsqueeze(vec, 1)
 
-    vec = torch.zeros_like(seq[:, :, :1]).cuda() + vec
+    vec = torch.zeros_like(seq[:, :, :1]) + vec
     return torch.cat([seq, vec], 2)
 
 
@@ -35,10 +35,8 @@ def seq_gather(x):
     seq, idxs = x
     batch_idxs = torch.arange(0, seq.size(0))
 
-    batch_idxs = torch.unsqueeze(batch_idxs, 1).cuda()
+    batch_idxs = torch.unsqueeze(batch_idxs, 1)
 
-    # print("batch_idxs",batch_idxs.device)
-    # print("idxs",idxs.device)
     idxs = torch.cat([batch_idxs, idxs], 1)
 
     res = []
@@ -48,9 +46,6 @@ def seq_gather(x):
 
     res = torch.cat(res)
     return res
-
-
-from Attention import DotAttention
 
 
 class s_model(nn.Module):
@@ -80,17 +75,7 @@ class s_model(nn.Module):
 
         self.conv1 = nn.Sequential(
             nn.Conv1d(
-                in_channels=word_emb_size ,  # 输入的深度
-                out_channels=word_emb_size,  # filter 的个数，输出的高度
-                kernel_size=3,  # filter的长与宽
-                stride=1,  # 每隔多少步跳一下
-                padding=1,  # 周围围上一圈 if stride= 1, pading=(kernel_size-1)/2
-            ),
-            nn.ReLU(),
-        )
-        self.conv2 = nn.Sequential(
-            nn.Conv1d(
-                in_channels=word_emb_size*2,  # 输入的深度
+                in_channels=word_emb_size * 2,  # 输入的深度
                 out_channels=word_emb_size,  # filter 的个数，输出的高度
                 kernel_size=3,  # filter的长与宽
                 stride=1,  # 每隔多少步跳一下
@@ -105,51 +90,38 @@ class s_model(nn.Module):
         self.fc_ps2 = nn.Sequential(
             nn.Linear(word_emb_size, 1),
         )
-        self.linear_q = nn.Linear(word_emb_size, word_emb_size)
-        self.linear_k = nn.Linear(word_emb_size, word_emb_size)
-        self.linear_v = nn.Linear(word_emb_size, word_emb_size)
 
     def forward(self, t):
         mask = torch.gt(torch.unsqueeze(t, 2), 0).type(torch.FloatTensor)  # (batch_size,sent_len,1)
         mask.requires_grad = False
-
         # mask torch.Size([21, 126, 1])
         outs = self.embeds(t)
         # outs torch.Size([21, 126, 128])
         t = outs
         t = self.fc1_dropout(t)
-        mask=mask.cuda()
+
         t = t.mul(mask)  # (batch_size,sent_len,char_size)
         # t torch.Size([21, 126, 128])
         # mask torch.Size([21, 126, 1])
         # mul矩阵对应位置相乘 mm矩阵相乘 此时t中LongTensor=0的补丁embed值被全部mask成0
-        # t, (h_n, c_n) = self.lstm1(t, None)
-        # t, (h_n, c_n) = self.lstm2(t, None)
-        t = self.conv1(t.permute(0,2,1))
-        t = t.permute(0,2,1)
-        # torch.Size([21, 126, 128])
-        t_max, t_max_index = seq_max_pool([t, mask.squeeze(-2)])
+        t, (h_n, c_n) = self.lstm1(t, None)
+        t, (h_n, c_n) = self.lstm2(t, None)
+
+        t_max, t_max_index = seq_max_pool([t, mask])
 
         t_dim = list(t.size())[-1]
         h = seq_and_vec([t, t_max])
-        # torch.Size([21, 126, 256])
-
-        h = self.conv2(h.permute(0,2,1))
 
         h = h.permute(0, 2, 1)
-        # torch.Size([21, 126, 128])
-        '''开始attention过程'''
-        q = self.linear_q(h)
-        k = self.linear_k(h)
-        v = self.linear_v(h)
 
-        att = DotAttention(dropout=0.2).cuda()
-        attention_out, attention_weight = att(q, k, v, )
-        # ps1 = self.fc_ps1(h)
-        # ps2 = self.fc_ps2(h)
-        ps1 = self.fc_ps1(attention_out)
-        ps2 = self.fc_ps2(attention_out)
-        '''att结束'''
+        h = self.conv1(h)
+
+        h = h.permute(0, 2, 1)
+
+        print(h.size())
+        ps1 = self.fc_ps1(h)
+        ps2 = self.fc_ps2(h)
+
         # torch.Size([21, 126, 1])
         # torch.Size([21, 126, 1])
         # torch.Size([21, 126, 128])
@@ -182,9 +154,7 @@ class po_model(nn.Module):
             nn.Linear(word_emb_size, num_classes + 1),
             # nn.Softmax(),
         )
-        self.linear_q = nn.Linear(word_emb_size, word_emb_size)
-        self.linear_k = nn.Linear(word_emb_size, word_emb_size)
-        self.linear_v = nn.Linear(word_emb_size, word_emb_size)
+
     def forward(self, t, t_max, k1, k2):
         k1 = seq_gather([t, k1])
 
@@ -203,19 +173,13 @@ class po_model(nn.Module):
         h = h.permute(0, 2, 1)
         # h此时torch.Size([21, 126, 128])
 
-
-        '''开始attention过程'''
-
-        q = self.linear_q(h)
-        k = self.linear_k(h)
-        v = self.linear_v(h)
-
-        att = DotAttention(dropout=0.2)
-        attention_out, attention_weight = att(q, k, v, )
-
-        '''att结束'''
-
-        po1 = self.fc_ps1(attention_out)
-        po2 = self.fc_ps2(attention_out)
+        po1 = self.fc_ps1(h)
+        po2 = self.fc_ps2(h)
 
         return [po1, po2]
+
+
+
+
+
+
