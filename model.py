@@ -76,7 +76,7 @@ class s_model(nn.Module):
         self.conv1 = nn.Sequential(
             nn.Conv1d(
                 in_channels=word_emb_size * 2,  # 输入的深度
-                out_channels=word_emb_size,  # filter 的个数，输出的高度
+                out_channels=word_emb_size*2,  # filter 的个数，输出的高度
                 kernel_size=3,  # filter的长与宽
                 stride=1,  # 每隔多少步跳一下
                 padding=1,  # 周围围上一圈 if stride= 1, pading=(kernel_size-1)/2
@@ -84,11 +84,11 @@ class s_model(nn.Module):
             nn.ReLU(),
         )
         self.fc_ps1 = nn.Sequential(
-            nn.Linear(word_emb_size, 1),
+            nn.Linear(word_emb_size*2, 1),
         )
 
         self.fc_ps2 = nn.Sequential(
-            nn.Linear(word_emb_size, 1),
+            nn.Linear(word_emb_size*2, 1),
         )
 
     def forward(self, t):
@@ -112,11 +112,13 @@ class s_model(nn.Module):
         t_dim = list(t.size())[-1]
         h = seq_and_vec([t, t_max])
 
-        h = h.permute(0, 2, 1)
-
-        h = self.conv1(h)
-
-        h = h.permute(0, 2, 1)
+        # h = h.permute(0, 2, 1)
+        #
+        # h = self.conv1(h)
+        #
+        # h = h.permute(0, 2, 1)
+        conv_res = self.conv1(h.permute(0,2,1))
+        h = h+conv_res.permute(0,2,1)
 
         ps1 = self.fc_ps1(h)
         ps2 = self.fc_ps2(h)
