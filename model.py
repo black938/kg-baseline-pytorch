@@ -118,7 +118,6 @@ class s_model(nn.Module):
 
         h = h.permute(0, 2, 1)
 
-        print(h.size())
         ps1 = self.fc_ps1(h)
         ps2 = self.fc_ps2(h)
 
