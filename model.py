@@ -170,7 +170,7 @@ class po_model(nn.Module):
         # h此时变为21 126 h.size(2)+k.size(2)=512
 
         # h此时为[bs,channel,seq_len]
-        conv_res = self.conv1(h=h.permute(0, 2, 1))
+        conv_res = self.conv1(h.permute(0, 2, 1))
         h = h + conv_res.permute(0, 2, 1)
         # h此时torch.Size([21, 126, 128])
 
