@@ -155,6 +155,7 @@ class po_model(nn.Module):
             nn.Linear(word_emb_size * 4, num_classes + 1),
             # nn.Softmax(),
         )
+        self.relu = nn.ReLU()
 
     def forward(self, t, t_max, k1, k2):
         k1 = seq_gather([t, k1])
@@ -173,7 +174,7 @@ class po_model(nn.Module):
         conv_res = self.conv1(h.permute(0, 2, 1))
         h = h + conv_res.permute(0, 2, 1)
         # h此时torch.Size([21, 126, 128])
-        h = nn.ReLU(h)
+        h = self.relu(h)
         po1 = self.fc_ps1(h)
         po2 = self.fc_ps2(h)
 
