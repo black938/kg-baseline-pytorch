@@ -137,8 +137,8 @@ class po_model(nn.Module):
 
         self.conv1 = nn.Sequential(
             nn.Conv1d(
-                in_channels=word_emb_size * 4,  # 输入的深度
-                out_channels=word_emb_size * 4,  # filter 的个数，输出的高度
+                in_channels=word_emb_size * 2,  # 输入的深度
+                out_channels=word_emb_size * 2,  # filter 的个数，输出的高度
                 kernel_size=3,  # filter的长与宽
                 stride=1,  # 每隔多少步跳一下
                 padding=1,  # 周围围上一圈 if stride= 1, pading=(kernel_size-1)/2
@@ -147,12 +147,12 @@ class po_model(nn.Module):
         )
 
         self.fc_ps1 = nn.Sequential(
-            nn.Linear(word_emb_size * 4, num_classes + 1),
+            nn.Linear(word_emb_size * 2, num_classes + 1),
             # nn.Softmax(),
         )
 
         self.fc_ps2 = nn.Sequential(
-            nn.Linear(word_emb_size * 4, num_classes + 1),
+            nn.Linear(word_emb_size * 2, num_classes + 1),
             # nn.Softmax(),
         )
 
